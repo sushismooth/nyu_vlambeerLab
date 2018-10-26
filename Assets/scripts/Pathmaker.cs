@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using UnityEngine.UI;
 
 // MAZE PROC GEN LAB
 // all students: complete steps 1-6, as listed in this file
@@ -18,8 +20,29 @@ public class Pathmaker : MonoBehaviour {
 //	Declare a private integer called counter that starts at 0; 		// counter var will track how many floor tiles I've instantiated
 //	Declare a public Transform called floorPrefab, assign the prefab in inspector;
 //	Declare a public Transform called pathmakerSpherePrefab, assign the prefab in inspector; 		// you'll have to make a "pathmakerSphere" prefab later
+	private int counter;
+	public int maxTileCount;
+	public static int globalTileCounter;
+	public int maxGlobalTileCount;
+	public float turnChance; //chance to turn left or right Range: 0.0 - 1.0
+	public float duplicateChance; //chance to instantiate another pathMaker
 
-
+	public static List<Transform> tileList = new List<Transform>();
+	public GameObject floorTiles;
+	public Transform floorPrefab;
+	public Transform grassPrefab;
+	public Transform mountainPrefab;
+	public Transform forestPrefab;
+	public Transform lakePrefab;
+	
+	public Transform pathmakerSpherePrefab;
+	
+	void Start()
+	{
+		maxTileCount += Random.Range(maxTileCount / -2, maxTileCount / 2);
+		duplicateChance *= Random.Range(0.5f, 1.0f);
+	}
+	
 	void Update () {
 //		If counter is less than 50, then:
 //			Generate a random number from 0.0f to 1.0f;
@@ -33,6 +56,65 @@ public class Pathmaker : MonoBehaviour {
 //			Increment counter;
 //		Else:
 //			Destroy my game object; 		// self destruct if I've made enough tiles already
+
+		if (counter < maxTileCount)
+		{
+			float random = Random.Range(0f, 1f);
+			if (random < turnChance/2)
+			{
+				transform.Rotate(Vector3.up, 90f);
+			} 
+			else if (random >= turnChance/2 && random < turnChance)
+			{
+				transform.Rotate(Vector3.up, -90f);
+			}
+			else if (random >= 1.0f - duplicateChance)
+			{
+				Instantiate(pathmakerSpherePrefab, transform.position, transform.rotation);
+			}
+
+			if (Physics.Raycast(transform.position + new Vector3(0,10,0), Vector3.down) == false)
+			{
+				Transform floor = Instantiate(chooseTile(), transform.position, transform.rotation);
+				floor.parent = floorTiles.transform;                                                                              			
+				tileList.Add(floor);
+				counter++;
+                globalTileCounter++;
+			}
+            transform.Translate(Vector3.forward * 5);
+		}
+		else
+		{
+			Destroy(this.gameObject);
+		}
+
+		if (globalTileCounter >= maxGlobalTileCount)
+		{
+			Destroy(this.gameObject);
+		}
+	}
+
+	Transform chooseTile()
+	{
+		float randomizer = Random.Range(0f, 1f);
+		if (randomizer <= 0.5f)
+		{
+			return grassPrefab;
+		}
+		else if (randomizer <= 0.7f)
+		{
+			return forestPrefab;
+		}
+		else if (randomizer <= 0.9f)
+		{
+			return mountainPrefab;
+		}
+		else if (randomizer <= 1.0f)
+		{
+			return lakePrefab;
+		}
+
+		return null;
 	}
 
 } // end of class scope
